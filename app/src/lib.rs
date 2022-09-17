@@ -4,7 +4,8 @@
 //use common::bvm_interface::root::*;
 use common::bvm_safe;
 use common::bvm_interface::root::*;
-use common::{ params::*, *};
+use common::bvm_util::*;
+use common::params::*;
 
 use core::mem::size_of_val;
 
@@ -47,7 +48,7 @@ fn on_action_destroy_contract(cid: ContractID) {
 }
 
 fn on_action_view_contracts(_unused: ContractID) {
-    bvm_safe::enum_and_dump_contracts(&::common::SID);
+    enum_and_dump_contracts(&::common::contract_sid::SID);
 }
 
 #[no_mangle]

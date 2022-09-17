@@ -1,9 +1,7 @@
 #![no_std]
 #![no_main]
 
-use common::root::env;
-use common::root::*;
-use common::*;
+use common::params::{CtorParams, DtorParams};
 
 #[no_mangle]
 #[allow(non_snake_case)]
