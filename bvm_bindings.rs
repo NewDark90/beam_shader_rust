@@ -1,90 +1,42 @@
 pub mod root {
-    pub type Height = u64;
-    pub type Amount = u64;
-    pub type AssetID = u32;
-    pub type Timestamp = u64;
-    pub type ContractID = [u8; 32usize];
-    pub type ShaderID = [u8; 32usize];
-    pub type HashValue = [u8; 32usize];
-    pub type SecpScalarData = [u8; 32usize];
+    use crate::bvm_interface::root::*;
+    use crate::bvm_interface::root:Secp::*;
 
-    #[repr(C)]
-    pub struct SecpPoint {
-        _unused: [u8; 0],
-    }
+    /*
+    impl Point {
+        pub fn import(&mut self, pk: &PubKey) -> bool {
+            return crate::env::secp_point_import(self.ptr, pk) != 0;
+        }
 
-    pub mod merkle {
-        #[repr(C)]
-        pub struct Node {
-            pub first: bool,
-            pub second: [u8; 32],
+        pub fn export(&self, pk: &mut PubKey) {
+            crate::env::secp_point_export(self.ptr, pk);
         }
     }
 
-    pub mod secp {
-        use crate::PubKey;
-        use crate::SecpPoint;
-
-        #[repr(C)]
-        pub struct Point {
-            pub ptr: *mut SecpPoint,
-        }
-
-        impl Point {
-            pub fn import(&mut self, pk: &PubKey) -> bool {
-                return crate::env::secp_point_import(self.ptr, pk) != 0;
-            }
-
-            pub fn export(&self, pk: &mut PubKey) {
-                crate::env::secp_point_export(self.ptr, pk);
-            }
-        }
-
-        impl core::ops::AddAssign for Point {
-            fn add_assign(&mut self, other: Point) {
-                crate::env::secp_point_add(self.ptr, self.ptr, other.ptr);
-            }
-        }
-
-        impl Default for Point {
-            fn default() -> Self {
-                Point {
-                    ptr: 0 as *mut SecpPoint,
-                }
-            }
+    impl core::ops::AddAssign for Point {
+        fn add_assign(&mut self, other: Point) {
+            crate::env::secp_point_add(self.ptr, self.ptr, other.ptr);
         }
     }
-
-    #[repr(C, packed(1))]
-    #[derive(Copy, Clone)]
-    pub struct SecpPointData {
-        pub x: [u8; 32usize],
-        pub y: u8,
-    }
-
-    impl Default for SecpPointData {
+    impl Default for Point {
         fn default() -> Self {
-            SecpPointData {
-                x: Default::default(),
-                y: Default::default(),
+            Point {
+                ptr: 0 as *mut Secp_point,
+            }
+        }
+    } 
+    
+
+
+    impl Default for Secp_point_data {
+        fn default() -> Self {
+            Secp_point_data {
+                m_X: Default::default(),
+                m_Y: Default::default(),
             }
         }
     }
 
-    pub type PubKey = SecpPointData;
-
-    #[repr(C, packed(1))]
-    pub struct FundsChange {
-        pub amount: Amount,
-        pub aid: AssetID,
-        pub consume: u8,
-    }
-
-    #[repr(C, packed(1))]
-    pub struct SigRequest {
-        pub id_ptr: *const usize,
-        pub id_size: u32,
-    }
 
     impl SigRequest {
         pub fn get_pk<T: core::any::Any>(&self, pk: &mut T) {
@@ -100,7 +52,7 @@ pub mod root {
                 );
             } else {
                 env::get_pk(
-                    pk_any.downcast_mut::<SecpPoint>().unwrap(),
+                    pk_any.downcast_mut::<Secp_point>().unwrap(),
                     id_ptr,
                     self.id_size,
                 )
@@ -108,13 +60,8 @@ pub mod root {
         }
     }
 
-    pub type KeyID = SigRequest;
-
-    #[repr(C)]
-    pub struct HeightPos {
-        pub height: Height,
-        pub pos: u32,
-    }
+    //THIS IS TECHNICALLY DIFFERENT FROM THE BINDING
+    //pub type KeyID = SigRequest;
 
     impl Default for HeightPos {
         fn default() -> Self {
@@ -124,35 +71,18 @@ pub mod root {
             }
         }
     }
-
-    pub struct KeyTag {}
-
-    impl KeyTag {
-        pub const INTERNAL: u8 = 0;
-        pub const INTERNAL_STEALTH: u8 = 8;
-        pub const LOCKED_AMOUNT: u8 = 1;
-        pub const REFS: u8 = 2;
-        pub const OWNED_ASSET: u8 = 3;
-        pub const SHADER_CHANGE: u8 = 4;
-        pub const SID_CID: u8 = 16;
-        pub const MAX_SIZE: u32 = 256;
-    }
+*/
 
     pub mod env {
         use crate::root::*;
         use core::mem::size_of_val;
 
-        #[repr(C, packed(1))]
-        pub struct KeyPrefix {
-            pub cid: ContractID,
-            pub tag: u8,
-        }
-
+        /* 
         impl Default for KeyPrefix {
             fn default() -> Self {
                 KeyPrefix {
                     cid: Default::default(),
-                    tag: KeyTag::INTERNAL,
+                    tag: KeyTag_INTERNAL,
                 }
             }
         }
@@ -162,6 +92,7 @@ pub mod root {
             pub prefix: KeyPrefix,
             pub key_in_contract: T,
         }
+        */
 
         #[repr(C)]
         pub struct VarReaderEx<const FLEXIBLE: bool> {
@@ -335,7 +266,7 @@ pub mod root {
             pub cid: ContractID,
         }
 
-        type KeySidCid = Key<SidCid>;
+        type KeySidCid = Key_T<SidCid>;
 
         #[repr(C)]
         struct ContractsWalker {
@@ -348,7 +279,7 @@ pub mod root {
             pub fn r#enum(&mut self, sid: &ShaderID) {
                 let k0 = KeySidCid {
                     prefix: KeyPrefix {
-                        tag: KeyTag::SID_CID,
+                        tag: KeyTag_SID_CID,
                         ..Default::default()
                     },
                     key_in_contract: SidCid {
@@ -403,12 +334,13 @@ pub mod root {
             doc_close_array();
         }
 
+        /* 
         pub fn var_get_proof<K, V>(
             key: *const K,
             key_size: u32,
             val: *mut *const V,
             val_size: *mut u32,
-            proof: *mut *const merkle::Node,
+            proof: *mut *const Merkle::Node,
         ) -> u32 {
             unsafe {
                 _VarGetProof(
@@ -492,7 +424,7 @@ pub mod root {
                     key_size,
                     0 as *const usize,
                     0,
-                    KeyTag::INTERNAL,
+                    KeyTag_INTERNAL,
                 )
             }
         }
@@ -705,34 +637,34 @@ pub mod root {
             }
         }
 
-        pub fn secp_point_import(ptr: *mut SecpPoint, pk: *const PubKey) -> u8 {
+        pub fn secp_point_import(ptr: *mut Secp_point, pk: *const PubKey) -> u8 {
             unsafe { _Secp_Point_Import(ptr, pk) }
         }
 
-        pub fn secp_point_export(ptr: *const SecpPoint, pk: *mut PubKey) {
+        pub fn secp_point_export(ptr: *const Secp_point, pk: *mut PubKey) {
             unsafe { _Secp_Point_Export(ptr, pk) }
         }
 
-        pub fn secp_point_add(dst: *mut SecpPoint, a: *const SecpPoint, b: *const SecpPoint) {
+        pub fn secp_point_add(dst: *mut Secp_point, a: *const Secp_point, b: *const Secp_point) {
             unsafe { _Secp_Point_add(dst, a, b) }
         }
 
-        pub fn get_pk(ptr: *mut SecpPoint, id_ptr: *const usize, id_size: u32) {
+        pub fn get_pk(ptr: *mut Secp_point, id_ptr: *const usize, id_size: u32) {
             unsafe { _get_Pk(ptr, id_ptr, id_size) }
         }
 
         extern "C" {
             #[link_name = "get_Pk"]
-            fn _get_Pk(ptr: *mut SecpPoint, id_pk: *const usize, id_size: u32);
+            fn _get_Pk(ptr: *mut Secp_point, id_pk: *const usize, id_size: u32);
 
             #[link_name = "Secp_Point_add"]
-            fn _Secp_Point_add(dst: *mut SecpPoint, a: *const SecpPoint, b: *const SecpPoint);
+            fn _Secp_Point_add(dst: *mut Secp_point, a: *const Secp_point, b: *const Secp_point);
 
             #[link_name = "Secp_Point_Export"]
-            fn _Secp_Point_Export(ptr: *const SecpPoint, pk: *mut PubKey);
+            fn _Secp_Point_Export(ptr: *const Secp_point, pk: *mut PubKey);
 
             #[link_name = "Secp_Point_Import"]
-            fn _Secp_Point_Import(ptr: *mut SecpPoint, pk: *const PubKey) -> u8;
+            fn _Secp_Point_Import(ptr: *mut Secp_point, pk: *const PubKey) -> u8;
 
             #[link_name = "VarGetProof"]
             fn _VarGetProof(
@@ -740,7 +672,7 @@ pub mod root {
                 nKey: u32,
                 ppVal: *mut *const usize,
                 pnVal: *mut u32,
-                ppProof: *mut *const merkle::Node,
+                ppProof: *mut *const Merkle::Node,
             ) -> u32;
 
             #[link_name = "DerivePk"]
@@ -900,6 +832,6 @@ pub mod root {
                 comment: *const usize,
                 charge: u32,
             );
-        }
+        }*/
     }
 }
