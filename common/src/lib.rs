@@ -1,10 +1,8 @@
 #![no_std]
 #![no_main]
 
-pub mod panic_handler;
-pub mod bvm_interface;
-pub mod bvm_safe;
-pub mod bvm_util;
-//mod bvm_bindings;
+extern crate beam_bvm_interface;
+extern crate beam_bvm_util;
+
 pub mod contract_sid;
 pub mod params;

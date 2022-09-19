@@ -9,4 +9,6 @@ edition = "2021"
 crate-type = ["cdylib"]
 
 [dependencies]
+beam_bvm_interface = "0.1.0"
+beam_bvm_util = "0.1.0"
 common = { path = "../common" }
